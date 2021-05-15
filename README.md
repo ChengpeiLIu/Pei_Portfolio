@@ -11,6 +11,7 @@ Data Scientist Portfolio
 * Using selenium to scrape the airline reviews from Skytrax
 * investigated impact of COVID on traveling and predict customer satisfactions 
 * Using Logistic Regression and Naïve Bayes
+![](https://github.com/ChengpeiLIu/Pei_Portfolio/blob/main/images/heatmap.png)
 
 # Project 3: Airline Satisfaction Review
 * Feature Selection
