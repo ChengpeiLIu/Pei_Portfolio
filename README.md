@@ -5,6 +5,7 @@ Data Scientist Portfolio
 * Topic Modeling
 * Logistic Regression to predict Views & Likes
 * Sentiment Analysis
+![](https://github.com/ChengpeiLIu/Pei_Portfolio/blob/main/images/3.png)
 
 # Project 2: Skytrax customer Satisfaction Prediction 
 * Using selenium to scrape the airline reviews from Skytrax
