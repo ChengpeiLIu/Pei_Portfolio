@@ -1,9 +1,10 @@
 # Pei_Portfolio
 Data Scientist Portfolio
 
-# Project 1: Youtube Sentiment Analysis
+# [Project 1: Youtube Trend Analysis](https://github.com/ChengpeiLIu/Pei_Portfolio/tree/main/Youtube%20Trend%20Analysis)
 * Topic Modeling
-* Predict Views & Likes
+* Logistic Regression to predict Views & Likes
+* Sentiment Analysis
 
 # Project 2: Skytrax customer Satisfaction Prediction 
 * Using selenium to scrape the airline reviews from Skytrax
