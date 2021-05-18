@@ -22,5 +22,4 @@ Data Scientist Portfolio
 # [Project 4: Superbowl 2021 Prediction](https://github.com/ChengpeiLIu/Pei_Portfolio/tree/main/Superbowl%20Prediction%202021)
 * Predicted Tampa Bay Buccaneers win 
 * Used Alteryx as tool, utilize Regression techniques and Time Series models 
-
-![](https://github.com/ChengpeiLIu/Pei_Portfolio/tree/main/Superbowl%20Prediction%202021)
+![](https://github.com/ChengpeiLIu/Pei_Portfolio/blob/main/images/Screen%20Shot%202021-05-17%20at%2010.06.31%20PM.png)
