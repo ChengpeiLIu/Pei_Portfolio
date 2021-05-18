@@ -16,4 +16,4 @@ Data Scientist Portfolio
 # [Project 3: Airline Satisfaction Review](https://github.com/ChengpeiLIu/Pei_Portfolio/tree/main/Airline%20Passenger%20Satisfaction%20Prediction)
 * Feature Selection
 * Logistic Regression, Gaussian Naive Bayes, Decision Tree, Random Forests
-![](https://github.com/ChengpeiLIu/Pei_Portfolio/blob/main/images/heatmap.png)
+![](https://github.com/ChengpeiLIu/Pei_Portfolio/blob/main/images/new%20heatmap.png)
