@@ -7,7 +7,7 @@ Data Scientist Portfolio
 * Sentiment Analysis
 ![](https://github.com/ChengpeiLIu/Pei_Portfolio/blob/main/images/3.png)
 
-# Project 2: Skytrax customer Satisfaction Prediction 
+# [Project 2: Skytrax customer Satisfaction Prediction](https://github.com/ChengpeiLIu/Pei_Portfolio/tree/main/Skytrax%20Airline%20Review) 
 * Using selenium to scrape the airline reviews from Skytrax
 * investigated impact of COVID on traveling and predict customer satisfactions 
 * Using Logistic Regression and Naïve Bayes
