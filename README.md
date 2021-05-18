@@ -18,3 +18,9 @@ Data Scientist Portfolio
 * Feature Selection
 * Logistic Regression, Gaussian Naive Bayes, Decision Tree, Random Forests
 ![](https://github.com/ChengpeiLIu/Pei_Portfolio/blob/main/images/download%20(2).png)
+
+# [Project 4: Superbowl 2021 Prediction](https://github.com/ChengpeiLIu/Pei_Portfolio/tree/main/Superbowl%20Prediction%202021)
+* Predicted Tampa Bay Buccaneers win 
+* Used Alteryx as tool, utilize Regression techniques and Time Series models 
+
+![](https://github.com/ChengpeiLIu/Pei_Portfolio/tree/main/Superbowl%20Prediction%202021)
