@@ -42,5 +42,6 @@ During COVID, business are forced to shut doors, so many customers start to shop
 # [Project 6: Disney Park Improvement - Sentiment Analysis](https://github.com/ChengpeiLIu/Pei_Portfolio/tree/main/Disney%20Park%20Improvement)
 * Utilized key word matching such as "Happiest Place on Earth" & "Fast Pass" and identify emotions and topics within customer's reviews
 To compare customer sentiment regarding attractions at three Disneyland locations (Anaheim, Paris, and Hong Kong) using sentiment analysis, emotion detection, and n-gram associations. To identify keywords using topic modeling that can help Disney determine visitor pain points and improve park experience. 
-Find our medium article here: https://marielledelacruz.medium.com/analyzing-disneyland-reviews-b916b6dcccf4
+* Recommendations: Many visitor pain points stem from frustration of waiting in line and crowds. A large amount of time is spent standing in line, which irritates people and contributes to a more negative experience. Another common pain point that contributes to the problem with long lines is park capacity — more visitors mean longer wait times for attractions and food. Disney should take steps to alleviate symptoms of a negative park experience. 
+For more detailed recommendations: find my team's medium article here: https://marielledelacruz.medium.com/analyzing-disneyland-reviews-b916b6dcccf4
 ![](/images/7.png)
