@@ -2,15 +2,22 @@
 Data Scientist Portfolio
 
 # [Project 1: Youtube Trend Analysis](https://github.com/ChengpeiLIu/Pei_Portfolio/tree/main/Youtube%20Trend%20Analysis)
-* Topic Modeling
-* Logistic Regression to predict Views & Likes
-* Sentiment Analysis
+* Categorising YouTube videos based on their comments and statistics.
+* Analysing what factors affect how popular a YouTube video will be.
+* The purpose of YouTube Sentiment Analysis report is to find interesting insights within the two YouTube Trending datasets, US Videos and US Comments, from Kaggle. The types of insights and questions are “which category are the most trendy,” “difference of likes and dislikes ratio among video categories,” “what are the most positive, negative, and neutral tags and comments,” and “predict YouTube video category.” In addition, I hope to find correlations among the trending video attributes and find out the key variables that drive the virality of a video. Natural Language Processing Toolkit, NLTK, and TextBlob were used to tokenize the comments and score the positivity and negativity of the texts. Focusing on business implications, me and my team conducted a series of text mining analysis and provided machine learning algorithms solutions, aiming to help businesses with self-branding and better monitoring of marketing campaigns.
+* In summary, I believe the text mining techniques, Topic modeling Browser as well as prediction models create a powerful toolkit for any modern-day businesses or advertising agencies that is aiming to sculpt branding and increase awareness.
 ![](/images/3.png)
 
 # [Project 2: Skytrax customer Satisfaction Prediction](https://github.com/ChengpeiLIu/Pei_Portfolio/tree/main/Skytrax%20Airline%20Review) 
 * Using selenium to scrape the airline reviews from Skytrax
-* investigated impact of COVID on traveling and predict customer satisfactions 
-* Using Logistic Regression and Naïve Bayes
+* Investigated impact of COVID on traveling and customer satisfactions 
+* Using Logistic Regression, Naïve Bayes and Random Forest to predict customer satisfactions 
+* Sentiment Analysis using VADER & TextBlob
+* Perform LDA Modeling (Latent Dirichlet allocation) & WordCloud Visualizations on dissatisfied COVID related reviews 
+* * Logistic Regression with TF-IDF Vectorization (min_df = 3) has the highest accuracy
+* We chose to do a sentiment analysis on airline reviews as our topic to see how COVID-19 impacted the airline industry. We web-scrapped and used text analysis to obtain our data and to examine the polarity of a review. Then we ran Logistic Regression, Naive Bayes, and Random Forest to see how well the models perform. We concluded that Logistic Regression with TF-IDF Vectorization has the highest accuracy of 92% of correctly predicting sentiment of reviews. With respect to the current global pandemic, we hope our project can bring timely insights and areas of improvement for the airline industry for maximum customer satisfaction.
+
+
 
 ![](/images/6.png)
 
@@ -18,8 +25,8 @@ Data Scientist Portfolio
 * Identified important variables using Feature Selection techniques such as Chi-Squared test, eli5 (scikit learn)
 * Utilized Logistic Regression, Gaussian Naive Bayes, Decision Tree, Random Forests to predict customer satisfaction level
 * For Random Forests, it was the best performed model out of all 4, in terms of area under ROC and time taken for execution.
-* 
-Supporting $3.5 trillion (4.1%) of the world’s gross domestic product (GDP), the aviation industry has linked humanity together, allowing people across continents to meet and the global economy to function. Customer satisfaction is crucial for airline companies to build loyal customers and stay competitive. In this project, we try to identify areas of the airline travels that impact customer’s overall satisfaction and help airline companies provide better service as a way to increase higher customer retention rates, generate profits and stay competitive.
+* Supporting $3.5 trillion (4.1%) of the world’s gross domestic product (GDP), the aviation industry has linked humanity together, allowing people across continents to meet and the global economy to function. Customer satisfaction is crucial for airline companies to build loyal customers and stay competitive. In this project, I tried to identify areas of the airline travels that impact customer’s overall satisfaction and help airline companies provide better service as a way to increase higher customer retention rates, generate profits and stay competitive.
+* We hope by adopting the models, it could help provide some insights in areas of service passengers are satisfied or dissatisfied about, guiding airline companies with their operational and management decisions. 	
 
 ![](/images/5.jpeg)
 
@@ -34,7 +41,9 @@ Supporting $3.5 trillion (4.1%) of the world’s gross domestic product (GDP), t
 # [Project 5: E-Commerce Shipping On-Time Prediction](https://github.com/ChengpeiLIu/Pei_Portfolio/tree/main/E-Commerce%20On-time%20Delivery%20Prediction)
 * Written in R, utilized KNN, Poisson Regression, Decision Tree 
 * Predicted On-time Delivery
-During COVID, business are forced to shut doors, so many customers start to shop online, these exponential increase placed a huge strain on shipping networks and increased competition among e-commerce sellers, whoever can beat the door and provide ensured on-time deliveries can stand out in this competition and hold a space in the market. We want use machine learning techniques to help them study their customers and build an accurate classifier to predict whether goods can arrive on time or not. From doing so, we hope to pinpoint areas where company can improve their services and stand out in the competition.
+* During COVID, business are forced to shut doors, so many customers start to shop online, these exponential increase placed a huge strain on shipping networks and increased competition among e-commerce sellers, whoever can beat the door and provide ensured on-time deliveries can stand out in this competition and hold a space in the market. We want use machine learning techniques to help them study their customers and build an accurate classifier to predict whether goods can arrive on time or not. From doing so, I hope to pinpoint areas where company can improve their services and stand out in the competition.
+* Out of Logistic Regression, Decision Tree and KNN, KNN has the lowest error rate. By adopting these classification models, it can help companies identify potential late shipments for early intervention and it’s up to the company to choose the classification model to go with depending on the desired complexity.
+
 
 ![](/images/9.jpeg)
 
