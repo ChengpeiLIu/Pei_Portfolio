@@ -1,0 +1,752 @@
+---
+title: "BANA 288 Final Project E-Commerce Shipping Predection"
+subtitle: "Group 6: Huy Nguyen, Pei Liu, Yang Sheng, Yilin Du"
+
+ipsum_meta:
+  twitter_card: "Summary info for the Twitter Card"
+  twitter_site: "\\@sitehandle"
+  twitter_creator: "\\@creatorhandle"
+  og_url: "https\\://example.com/open/graph/finalURLfor/this"
+  og_description: "A modest size description of the content"
+  og_image: "https\\://example.com/open/graph/imageURLfor/this"
+output: 
+  hrbrthemes::ipsum:
+    toc: true
+---
+```{r include=FALSE}
+knitr::opts_chunk$set(fig.retina=2)
+```
+
+```{r ipsum_setup, message=FALSE, warning=FALSE, cache=FALSE, echo=FALSE}
+library(hrbrthemes)
+library(tidyverse)
+library(caTools)
+library(class)
+library(DataExplorer)
+library(dplyr)
+library(forecast)
+library(fpp2)
+library(gganimate)
+library(gbm)
+library(glmnet)
+library(gmodels)
+library(ggplot2)
+library(hrbrthemes)
+library(leaps)
+library(lubridate)
+library(MASS)
+library(naivebayes)
+library(psych)
+library(randomForest)
+library(scales)
+library(tidyr)
+library(tidyverse)
+library(tree)
+library(TTR)
+library(viridis)
+library(corrplot)
+library(Hmisc)
+library(rpart)
+library(rpart.plot)
+setwd("~/Documents/MSBA Courses/Spring Qt 2021/BANA 288 Predictive Analytics /288 Project")
+```
+
+
+## Project Overview
+Our dataset is from an international e-commerce company about their customer. It has 10999 observations of 12 variables. Our target variable is whether a piece of goods is delivered on time or not.   
+During COVID, business are forced to shut doors, so many customers start to shop online, these exponential increase placed a huge strain on shipping networks and increased competition among e-commerce sellers, whoever can beat the door and provide ensured on-time deliveries can stand out in this competition and hold a space in the market.
+We want use machine learning techniques to help them study their customers and build an accurate classifier to predict whether goods can arrive on time or not. From doing so, we hope to pinpoint areas where company can improve their services and stand out in the competition.
+
+
+## Pre-processing
+
+```{r, fig.show='hold'}
+# options(stringsAsFactors = TRUE)
+data = read.csv('Train.csv')
+
+# Check for missing values 
+options(repr.plot.width = 8, repr.plot.height = 3)
+plot_missing(data)
+
+# There are 0 missing rows moving forward.
+dat = na.omit(data)
+dim(data)
+
+# getting a general sense of the data
+describe(data)
+
+# Encode variables
+dat = data %>% 
+  mutate(Warehouse_block = as.factor(Warehouse_block), 
+         Mode_of_Shipment = as.factor(Mode_of_Shipment), 
+         Product_importance = as.factor(Product_importance), 
+         Gender = as.factor(Gender))
+# check 
+str(dat)
+```
+
+## Correlation matrix
+```{r, fig.show='hold'}
+# filter dataset for numerical variables only
+dat_num <- dat %>%
+    dplyr::select(-ID, -Warehouse_block, -Mode_of_Shipment, - Product_importance, - Gender)
+str(dat_num)
+
+# function to flatten matrix
+flattenCorrMatrix = function(cormat, pmat) 
+{
+  ut = upper.tri(cormat)
+  data.frame(
+    row = rownames(cormat)[row(cormat)[ut]],
+    column = rownames(cormat)[col(cormat)[ut]],
+    cor  =(cormat)[ut],
+    p = pmat[ut]
+  )
+}
+
+# Use it on our data to generate a correlation matrix with P values 
+res = rcorr(as.matrix(dat_num))
+result = flattenCorrMatrix(res$r, res$P)
+
+# Selects The top 3 variables with the highest absolute values of correlation 
+# Coefficients with "Reached.on.Time_Y.N"
+result_tail = tail(result, 6)
+Top_4_corr = result_tail %>%
+  mutate(abs_cor = abs(cor)) %>%
+  arrange(desc(abs_cor)) %>%
+  top_n(n = 4)
+Top_4_corr
+
+# Not counting the ID, the top 3 variables are Discount_offered, Weight_in_gms & Cost_of_the_Product.
+# Plot it
+corrplot(cor(dat_num), type = "upper", order = "hclust", tl.col = "black", tl.srt = 45)
+
+```
+From running the correlation matrix, we have the following observation: 
+Top 4 variables that are correlated with our target variable "Reached on Time" are  Discount offered, shipping goods weight, the cost of the product and the number of calls received from customers. Note here that all top 4 are all below 0.5 in their correlation coefficient absolute values, therefore there isn't really any variables in our data that is highly correlated with our target variable "Reached on Time". 
+Among these top 4, variables that are highly positively correlated with "Reached on Time" is "Discount_offered", this relationship indicates that as more discount offered, that product will be more likely to be reached on time. 
+Variables that are mildly negatively correlated with "Reached on Time" is "Weight_in_gms", it indicates that the heavier a particular piece of product is, that product will be less likely to be reached on time. 
+
+
+## EDA
+```{r, fig.show='hold'}
+# General plots
+plot_histogram(dat)
+plot_density(dat)
+```
+Above are some frequency distribution bar plots and some density line plots of our variables in the data set, these offer a glimpse into the basic distribution of the data we are working with. For these plots, we observe that we have more expensive or high-end products in our data, most of these products don't have any discount offered. Our customers seem to call more around 3 or 4 times regarding a product. There are equal amount of customers that are satisfied and dissatisfied with the shipping service. All the customers in our data are returned purchasers and there are more that has placed order with the shipping company 3 times prior.
+
+
+```{r, fig.show='hold'}
+# Basic boxplot
+boxplot(Discount_offered  ~ Prior_purchases, data = dat)
+# Discounts are given  all across, not just to orders with prior purchases.
+boxplot(Weight_in_gms ~ Warehouse_block, data = dat)
+```
+From above boxplots, we discover that:
+(1) Discounts are given  all across the orders, not just to orders with prior purchases.
+(2) Among the warehouses, there seems to be no significant characteristics in each of the warehouse blocks. Warehouse B,D and F seems to handle more variety of products as the range of product weights for them is bigger.
+
+
+```{r, fig.show='hold'}
+# checking if gender matters
+boxplot(Customer_care_calls ~ Gender, data = dat)
+boxplot(Discount_offered ~ Gender, data = dat)
+boxplot(Cost_of_the_Product ~ Gender, data = dat)
+boxplot(Customer_rating  ~ Gender, data = dat)
+
+```
+ In any of these boxplots, there are no significant difference between the male & female shippers. 
+
+```{r, fig.show='hold'}
+# Fancy boxplot # 1 
+ggplot(data = dat, aes(x = Customer_care_calls , y = Cost_of_the_Product,  
+                       group = Customer_care_calls)) + 
+  geom_boxplot(color="red", fill="orange", alpha = 0.2) + 
+  labs(title = 'Do products that costs more receive more calls from customers?',
+       y ='Cost of the product', 
+       x = 'Number of Calls Received by Customer Care') +   
+  theme(plot.title = element_text(hjust = 0.5))
+```
+We discovered that the more expensive a product is, the more calls received by customer care. This makes sense, the more valuable a product is, the more costs to the customers if such products getting lost, therefore they want to keep up with the shipping status tightly. 
+
+```{r, fig.show='hold'}
+# fancy boxplot # 2
+# boxplot(Cost_of_the_Product  ~ Prior_purchases, data = dat)
+ggplot(data = dat, aes(x = Prior_purchases , y = Cost_of_the_Product , 
+                       group = Prior_purchases)) + 
+  geom_boxplot(color="blue", fill="purple",alpha=0.3) + 
+  theme(legend.position = "none") +
+  labs(title = 'Do customers keep shipping expensive products?',
+       y ='Cost_of_the_Product', 
+       x = 'Prior_purchases')  +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+We also discovered that customers with prior order amounts around 3 to 6 times ship more expensive products than the rest. This could be useful information in the future for company's customer segmentation. 
+
+```{r, fig.show='hold'}
+# Reached-on-time Focus Visuals
+# Warehouses
+T1 = dat %>%
+  group_by(Warehouse_block) %>%
+  summarise(yes_percent = percent(sum(Reached.on.Time_Y.N == 1) / n()),
+            no_percent = percent(sum(Reached.on.Time_Y.N == 0) / n()))
+
+T2 = gather(T1, yes_no, percent, -Warehouse_block)
+
+ggplot(data = T2, aes(x = Warehouse_block, y = percent, 
+                      fill= as.factor(yes_no))) +
+  geom_bar(stat='identity', position="dodge") +
+  scale_fill_brewer(palette ="Set1") +
+  geom_text(aes(label = percent), 
+            position = position_dodge(width = 1), vjust = -0.5) + 
+  labs(title = 'Among Warehouses: On-Time or Late (%) ',
+       y ='Percentage of on-time or late(%)', 
+       x = 'Warehouse block') +   
+  theme(plot.title = element_text(hjust = 0.5))
+
+
+# Method of shipment
+T11 = dat %>%
+  group_by(Mode_of_Shipment) %>%
+  summarise(yes_percent = percent(sum(Reached.on.Time_Y.N == 1)/n()),
+            no_percent = percent(sum(Reached.on.Time_Y.N == 0)/n()))
+
+T22 = gather(T11, yes_no, percent, -Mode_of_Shipment)
+
+ggplot(data = T22, aes(x = Mode_of_Shipment, y = percent, 
+                       fill= as.factor(yes_no))) +
+  geom_bar(stat='identity', position="dodge") +
+  scale_fill_brewer(palette ="Set2") +
+  geom_text(aes(label = percent), 
+            position = position_dodge(width = 1), vjust = -0.5) + 
+  labs(title = 'Among Shipment Methods: On-Time or Late (%) ',
+       y ='Percentage of on-time or late(%)', 
+       x = 'Methods of Shipment') +   
+  theme(plot.title = element_text(hjust = 0.5))
+
+
+
+# Product Importance
+T111 = dat %>%
+  group_by(Product_importance) %>%
+  summarise(yes_percent = percent(sum(Reached.on.Time_Y.N == 1) / n()),
+            no_percent = percent(sum(Reached.on.Time_Y.N == 0) / n()))
+
+T222 = gather(T111, yes_no, percent, -Product_importance)
+
+ggplot(data = T222, aes(x = Product_importance, y = percent, 
+                        fill= as.factor(yes_no))) +
+  geom_bar(stat='identity', position="dodge") +
+  scale_fill_brewer(palette ="Paired") +
+  geom_text(aes(label = percent), 
+            position = position_dodge(width = 1), vjust = -0.5) + 
+  labs(title = 'Among Product Importance: On-Time or Late (%) ',
+       y ='Percentage of on-time or late(%)', 
+       x = 'Product_importance') +   
+  theme(plot.title = element_text(hjust = 0.5))
+
+
+```
+There is no significant different on arrival time ratio based on warehouse block or mode of shipment.
+But product importance does matter in Arrival Time Ratio. Highly important products has the Highest Arrival Time Ratio.
+
+## Linear Regression
+ We would like to fit a linear regression to estimate the cost of the items we ship based on the available attributes
+ There are a few theories we would like to test:
+ 1. Customers who had more purchases in the past will trust the company with more valuable goods
+ 2. The higher the review a customer gives, the more valuable the goods they trust the company to ship
+ 3. Giving out more discounts will lead to customers ship more expensive goods
+ 4. The heavier the goods, the more expensive it should be.
+ 
+```{r, fig.show='hold'}
+# The Reached.on.Time_Y.N programmed on time shipments as 1, and late 0. We're switching them around in the column Reached.on.Time_Fixed
+data$Reached.on.Time_Fixed = ifelse(data$Reached.on.Time_Y.N == 1, 0, 1)
+data$Customer_rating = as.factor(data$Customer_rating)
+
+# Simple linear regression with all variables
+linear.model.full1 = lm(Cost_of_the_Product ~ . - Reached.on.Time_Y.N - ID, data = data)
+summary(linear.model.full1)
+# RMSE = 44.92 and R square is 0.128
+
+# linear regression with factorized variables
+warehouse = data$Warehouse_block
+temp1 = data.frame(model.matrix(~warehouse - 1))
+
+modes = data$Mode_of_Shipment
+temp2 = data.frame(model.matrix(~modes - 1))
+
+ratings = factor(data$Customer_rating)
+temp3 = data.frame(model.matrix(~ratings - 1))
+
+importance = factor(data$Product_importance)
+temp4 = data.frame(model.matrix(~importance - 1))
+
+sex = factor(data$Gender)
+temp5 = data.frame(model.matrix(~sex - 1))
+
+# Rearrange the columns for easier reference
+data2 = cbind(data[13], temp1, temp2, data[4], temp3, data[6 : 7], temp4, temp5, data[10])
+
+linear.model.full2 = lm(Cost_of_the_Product ~ ., data = data2)
+summary(linear.model.full2)
+```
+For first linear regression model without factorization: RMSE = 44.92 and R square is 0.128 
+For the second linear regression model with factored variables:  RMSE = 45.11 and R square is 0.1203.
+The two models don't differ much in either RMSE or R Square values. 
+
+At alpha = 0.05, with linear.model.full1, we can see from the result that the significant variables are Warehouse_blockB, Customer_care_calls, 
+Prior_purchases, Product_importancelow, Discount_offered, GenderM, Weight_in_gms and Reached.on.Time_Fixed
+The R-squared is 0.1277, which is quite low. It indicates the variables selected only contributes to 12.77% of the variations in our target variable cost of the product, indicating a poorly fitted model.
+
+Despite the low R-squared, theories #1, 3 and 4 that we wanted to test out are validated since Prior_purchases, Discount_offered and Weight_in_gms are among the significant indicators to predict the cost of product.
+
+The results from linear regression also match in what we discovered in EDA: that Customer_care_calls and cost of the product are positively correlated. The more valuable their goods are, more calls are received from the customer service regarding that product.
+
+### Find the best combination of attributes
+```{r, fig.show='hold'}
+data3 = cbind(data[13], data[2 : 11])
+summary(regsubsets(Cost_of_the_Product ~ ., data = data3, nbest = 1))
+``` 
+Here we used "regsubsets" command to select best features for our model. Since the "regsubsets" function stopped at 8, it indicates that 8 is the optimal number of variables according to regsubsets.
+
+Again, the 8 optimal variables are Customer_care_calls, Discount_offered, Weight_in_gms, Prior_purchases, Reached.on.Time_Fixed, 
+Warehouse_blockB, GenderM, Product_importancelow - same as the significant variables we observed in the linear regression model.
+
+### Built linear regression model with best sets of features 
+```{r, fig.show='hold'}
+#Linear regression with all significant variables 
+reg.2 = lm(Cost_of_the_Product ~ Warehouse_block + Customer_care_calls + Prior_purchases + Product_importance + Discount_offered + Gender
+            + Weight_in_gms+ + Reached.on.Time_Fixed, data = data)
+summary.reg.2 = summary(reg.2)
+summary.reg.2
+
+```
+With our best set of 8 features, we now run linear regression again. The results we obtained are: RMSE is 44.92 and R square is 0.1275.
+
+
+### ANOVA Test for effectiveness of the reduced model
+```{r, fig.show='hold'}
+anova(reg.2, linear.model.full2)
+```
+From the anova test results, we fail to reject H0, the reduced model is not better than the full model in terms of estimating cost of the products. 
+We conclude that using the reduced model to predict a shipment's value isn't any better than the full set of model.
+
+### Training & testing in linear regression
+```{r, fig.show='hold'}
+# Divide the model into train/test sets and test for accuracy/RMSE
+set.seed(246810)
+train = sample(nrow(data), nrow(data) / 2)
+data.train = data[train,]
+data.test = data[-train,]
+# Running regression model on the train set 
+reg.train = lm(Cost_of_the_Product ~ . - Reached.on.Time_Y.N - ID, data = data.train)
+summary(reg.train)
+# Adjusted R-squared: 0.124  
+anova(reg.train)
+# RMSE = 44.96
+
+# Run regression model on the test set
+reg.test = lm(Cost_of_the_Product ~ . - Reached.on.Time_Y.N - ID, data = data.test)
+summary(reg.test)
+# Adjusted R-squared: 0.1299 
+anova(reg.test)
+# RMSE = 44.86
+```
+We could from the result that the RMSE for training dataset and testing dataset are very close. Hence, overfitting doesn't seem to be an issue here.
+
+### Ridge & Lasso Regression
+#### Ridge Regression
+```{r, fig.show='hold'}
+str(data)
+y = data$Cost_of_the_Product
+X = model.matrix(Cost_of_the_Product ~ . - ID - Reached.on.Time_Y.N - 1, data)[,]
+dim(X)
+head(X)
+#Set up lambda grid 
+grid = 10 ^ seq(10, -2, length = 100)
+#Set up training dataset 
+set.seed(121212)
+train = sample(1 : nrow(X), nrow(X) / 2)
+X.train = X[train,]
+y.train = y[train]
+X.test = X[-train,]
+y.test = y[-train]
+dat1.train =  data[train,]
+dat1.test =  data[-train,]
+ridge.mod = glmnet(X.train, y.train, alpha = 0, lambda = grid, thresh = 1E-4)
+
+# Test for all in model 
+reg3 = lm(Cost_of_the_Product ~ . - Reached.on.Time_Y.N - ID, data = dat1.train)
+summary(reg3)
+sum.reg = summary(reg3)
+sum.reg$sigma
+anova(reg3)
+# sigma = 44.9535
+
+reg6 = lm(Cost_of_the_Product ~ . - Reached.on.Time_Y.N - ID, data = dat1.test)
+summary(reg6)
+sum.reg = summary(reg6)
+sum.reg$sigma
+anova(reg6)
+#sigma = 44.86
+
+# Set up matrices to store the coefficients, predictions and errors
+ridge.coeff = matrix(0, nrow = ncol(X), ncol = 100)
+ridge.pred = matrix(0, nrow = length(y.test), ncol = 100)
+testerr = matrix(0, nrow = 100, ncol = 1)
+
+# Save values for 100 models
+for (j in 1:100) 
+{
+  ridge.coeff[,j] = ridge.mod$beta[,j]
+  ridge.pred[,j] = predict(ridge.mod, s = grid[j], 
+                            newx = X.test)
+  testerr[j] = mean((ridge.pred[,j] - y.test) ^ 2)
+}
+
+plot(testerr, xlab = "Model Number", ylab = "Test Mean Suqare Error")
+which.min(testerr)
+
+# The lowest lambda is at the 78th element of the grid
+ridge.mod$lambda[78]
+# lambda = 4.641589
+
+testerr[78]
+RMSE.R.78 = testerr[78] ^ 0.5
+RMSE.R.78
+# RMSE = 44.65796
+# Then, we predict y for the test data and compute MSE / RMSE.   
+cv.out = cv.glmnet(X.train, y.train, alpha = 0)
+plot(cv.out)
+names(cv.out)
+# Best performing lambda 
+bestlam = cv.out$lambda.min
+bestlam
+# lambda = 2.085747
+# Use the best value of lambda to estimate the test MSE on the test data
+ridge.pred = predict(ridge.mod, s = bestlam, newx = X.test)
+MSE.R.CV = mean((ridge.pred-y.test) ^ 2)
+RMSE.R.CV = MSE.R.CV ^ 0.5
+RMSE.R.CV
+# RMSE = 44.6625, this number is the lowest error so far
+```
+
+#### Lasso Regression 
+```{r, fig.show='hold'}
+# LASSO
+# Similar to the implmentation of Ridge, but LASSO has an alpha of 1 instead of 0
+lasso.mod = glmnet(X.train, y.train, alpha = 1, lambda = grid, thresh = 1E-4)
+cv.out1 = cv.glmnet(X.train, y.train, alpha = 1)
+
+plot(cv.out1)
+bestlam1 = cv.out1$lambda.min
+bestlam1
+# The best lambda is 0.07852702
+
+lasso.pred = predict(lasso.mod, s = bestlam1, newx = X.test)
+MSE.L.CV = mean((lasso.pred - y.test) ^ 2)
+RMSE.L.CV = MSE.L.CV ^ 0.5
+RMSE.L.CV
+# RMSE = 44.95471, higher than Ridge
+```
+
+## Logistic Regression
+### Binomial Regression & Poisson Regression Model
+We would like to see which attributes from the available dataset would contribute significantly the odds of the shipments arriving on time so that more attention could be spent on them. In order to achieve such goal, we run a logistic regression. 
+```{r, fig.show='hold'}
+binomial_model = glm(Reached.on.Time_Fixed ~ ., data = data3, family = 'binomial')
+summary(binomial_model)
+
+poisson_model = glm(Reached.on.Time_Fixed ~ ., data = data3, family = 'poisson')
+summary(poisson_model)
+```
+Compared to the binomial logistic regression, Poisson regression has the lowest residual deviance (6140.9 vs 12007) and is thus more accurate.
+Therefore we use possion to build another model with the 8 best features we have selected previously: Customer_care_calls, Customer_rating, Cost_of_the_Product, Prior_purchases, Product_importancelow, Product_importancemedium, Discount_offered, and weight_in_gms.
+
+```{r, fig.show='hold'}
+poisson_model2 = glm(Reached.on.Time_Fixed ~ Customer_care_calls + Customer_rating + Cost_of_the_Product + Prior_purchases + 
+                       Product_importance + Discount_offered + Weight_in_gms, data = data3, family = 'poisson')
+summary(poisson_model2)
+```
+AIC = 15038, residual deviance = 6142.3 - ever so slightly higher than the full model previously
+Except for Customer_rating, all attributes in the subset are significant contributor to the odds of a shipment reaching its destination on time
+
+### Chi- Square test
+```{r, fig.show='hold'}
+Chisq.teststat = poisson_model2$deviance - poisson_model$deviance
+Chisq.teststat
+
+df.teststat = poisson_model2$df.residual - poisson_model$df.residual
+df.teststat
+
+anova(poisson_model2, poisson_model, test = "Chisq")
+```
+Since the p-value is high, at 0.9866, we fail to reject H0. The subset is not better than the full model in terms of predicting the odds of shipments reaching their destinations on time.
+
+### Training & testing in Poisson Regression 
+```{r, fig.show='hold'}
+set.seed(123456)
+# Divide the train and test set
+# The train set will contain a 50/50 split, while the test set will preserve the 40/60 ratio as in the original data
+on_time = data3[data3$Reached.on.Time_Fixed == 1,]
+late = data3[data3$Reached.on.Time_Fixed == 0,]
+
+train_rows_on_time = sample(nrow(on_time), nrow(on_time) / 2)
+train_rows_late = sample(nrow(late), nrow(on_time) / 2)
+
+train_set = rbind(on_time[train_rows_on_time,], late[train_rows_late,])
+
+late.not.selected = late[-train_rows_late,]
+test_rows = sample(nrow(late.not.selected), 3327)
+
+test_set = rbind(on_time[-train_rows_on_time, ], late.not.selected[test_rows,])
+
+# Test for ratios, both tables should be equal
+table(test_set$Reached.on.Time_Fixed) / 5545
+table(data3$Reached.on.Time_Fixed) / 10999
+
+# Test the model for classification effectiveness
+yhat.poisson.train = predict(poisson_model, train_set, type = "response")  
+yhat.poisson.train.class = ifelse(yhat.poisson.train > 0.5, 1, 0)
+
+# Create a confusion matrix for poisson regression, train set
+tab.poisson.train = table(train_set$Reached.on.Time_Fixed, yhat.poisson.train.class, dnn = c("Actual","Predicted"))
+tab.poisson.train
+
+# Error rate for poisson regression, test set
+train.poisson.error = mean(yhat.poisson.train.class != train_set$Reached.on.Time_Fixed)
+train.poisson.error
+# Error rate of 38.53%
+
+# Test set for poisson regression
+yhat.poisson.test = predict(poisson_model, test_set, type = "response")
+yhat.poisson.test.class = ifelse(yhat.poisson.test > 0.5, 1, 0)
+
+# Create a confusion matrix for poisson regression, test set
+tab.poisson.test = table(test_set$Reached.on.Time_Fixed, yhat.poisson.test.class, dnn = c("Actual","Predicted"))
+tab.poisson.test
+
+# Error rate for poisson regression, test set
+test.poisson.error = mean(test_set$Reached.on.Time_Fixed != yhat.poisson.test.class)
+test.poisson.error
+```
+For the poisson regression model with reduced variables, the testing accuracy is 36.32%, slightly lower than that of the train set, indicating potential overfitting.
+
+```{r, fig.show='hold'}
+# Test the model for classification effectiveness using poisson_model2
+yhat.poisson.train2 = predict(poisson_model2, train_set, type = "response")  
+yhat.poisson.train.class2 = ifelse(yhat.poisson.train2 > 0.5, 1, 0)
+
+# Create a confusion matrix for poisson regression, train set
+tab.poisson.train2 = table(train_set$Reached.on.Time_Fixed, yhat.poisson.train.class2, dnn = c("Actual","Predicted"))
+tab.poisson.train2
+
+# Error rate for poisson regression, test set
+train.poisson.error2 = mean(yhat.poisson.train.class2 != train_set$Reached.on.Time_Fixed)
+train.poisson.error2
+# Error rate of 38.39%
+
+# Test set for poisson regression
+yhat.poisson.test2 = predict(poisson_model2, test_set, type = "response")
+yhat.poisson.test.class2 = ifelse(yhat.poisson.test2 > 0.5, 1, 0)
+
+# Create a confusion matrix for poisson regression, test set
+tab.poisson.test2 = table(test_set$Reached.on.Time_Fixed, yhat.poisson.test.class2, dnn = c("Actual","Predicted"))
+tab.poisson.test2
+
+# Error rate for poisson regression, test set
+test.poisson.error2 = mean(test_set$Reached.on.Time_Fixed != yhat.poisson.test.class2)
+test.poisson.error2
+```
+For the second poisson regression model with full set of variables, the testing accuracy of 36.32%, slightly lower than that of the train set, indicating potential overfitting.
+
+Both models of logistic regression gave an accuracy of 36.32% for test set, which can definitely be higher.
+Now let's explore other classification techniques to see if the accuracy of classification can be improved.
+
+
+## Other classification techniques
+### Decision Tree
+```{r, fig.show='hold'}
+# Make sure the dependent variables on both sets are binary
+train_set$Reached.on.Time_Fixed = as.factor(train_set$Reached.on.Time_Fixed)
+test_set$Reached.on.Time_Fixed = as.factor(test_set$Reached.on.Time_Fixed)
+
+# Establish a decision tree model for the train set
+tree.train = tree(Reached.on.Time_Fixed ~ ., train_set)
+tree.summary = summary(tree.train)
+tree.summary
+# Error rate of 26.62% (1181/4436)
+
+# Plot the tree
+plot(tree.train)
+text(tree.train, pretty = 2)
+
+# prettier tree
+tree <- rpart(Reached.on.Time_Fixed ~ ., data=train_set, cp=.02)
+rpart.plot(tree, box.palette="RdBu", shadow.col="gray", nn=TRUE)
+
+
+# Summary statistics
+tree.summary$size
+tree.summary$misclass
+tree.summary$dev
+error.tree.train = tree.summary$misclass[1] / tree.summary$misclass[2]
+error.tree.train
+
+# Attempting to predict the train set using the tree just established
+tree.train.predict = predict(tree.train, train_set)
+tree.train.predict.cl = ifelse(tree.train.predict[,2] > 0.5, 1, 0)
+tab.train = table(train_set$Reached.on.Time_Fixed, tree.train.predict.cl, dnn = c("Actual", "Predicted"))
+# Confusion matrix, decision tree train set
+tab.train
+mean(train_set$Reached.on.Time_Fixed != tree.train.predict.cl)
+# Very good for predicting on time shipments, but not those that are late, despite late being the majority
+
+# Test set
+tree.test.predict = predict(tree.train, test_set)
+tree.test.predict.cl = ifelse(tree.test.predict[,2] > 0.5, 1, 0)
+tab.test = table(test_set$Reached.on.Time_Fixed, tree.test.predict.cl, dnn = c("Actual", "Predicted"))
+# Confustion matrix, decision tree test set
+tab.test
+err.tree.test = mean(test_set$Reached.on.Time_Fixed != tree.test.predict.cl)
+err.tree.test
+# Error rate of 32.96%
+
+# Pruning
+prune.tree.train = prune.misclass(tree.train)
+prune.tree.train
+plot(prune.tree.train$size, prune.tree.train$dev, xlab = "Tree Size", ylab = "Count of Misclassified")
+lines(prune.tree.train$size, prune.tree.train$dev)
+# The best tree size that will produce the least error is 5
+# Therefore there is no point in pruning the tree
+
+```
+
+## KNN
+```{r, fig.show='hold'}
+options(stringsAsFactors = FALSE)
+
+dat.knn = read.csv("Train.csv")
+
+# Remove the first ID column
+dat.knn = dat.knn[-1]
+dat.knn$Reached.on.Time_Fixed = ifelse(dat.knn$Reached.on.Time_Y.N == 1, 0, 1)
+dat.knn = dat.knn[-9]
+dat.knn$Warehouse_block = as.numeric(as.factor(dat.knn$Warehouse_block))
+dat.knn$Mode_of_Shipment = as.numeric(as.factor(dat.knn$Mode_of_Shipment))
+dat.knn$Product_importance = as.numeric(as.factor(dat.knn$Product_importance))
+dat.knn$Gender = as.numeric(as.factor(dat.knn$Gender))
+
+# Divide the train and test set
+# The train set will contain a 50/50 split, while the test set will preserve the 40/60 ratio as in the original data
+set.seed(123456)
+on_time.knn = dat.knn[dat.knn$Reached.on.Time_Fixed == 1,]
+late.knn = dat.knn[dat.knn$Reached.on.Time_Fixed == 0,]
+
+train_set.knn = rbind(on_time.knn[train_rows_on_time,], late.knn[train_rows_late,])
+
+late.not.selected.knn = late.knn[-train_rows_late,]
+test_rows.knn = sample(nrow(late.not.selected.knn), 3327)
+
+test_set.knn = rbind(on_time.knn[-train_rows_on_time, ], late.not.selected.knn[test_rows,])
+
+# Test for ratios, both tables should be equal
+table(test_set.knn$Reached.on.Time_Fixed) / 5545
+table(dat.knn$Reached.on.Time_Fixed) / 10999
+
+# Create Xs and y's for KNN train and test sets
+train_set.x = train_set.knn[, 1:9]
+train_set.y = train_set.knn[, 11]
+test_set.x = test_set.knn[, 1:9]
+test_set.y = test_set.knn[, 11]
+
+#  Run kNN
+knn1 = knn(train_set.x, test_set.x, train_set.y, k = 1)
+knn1[1:25]
+
+#  Confusion matrix with k = 1
+tab.knn1 = table(test_set.y, knn1, dnn = c("Actual", "Predicted"))
+tab.knn1
+
+#  Error rate with k = 1
+knn1.err = mean(test_set.y != knn1)
+knn1.err
+# Error rate of 34.39%
+
+#  Try k = 5
+knn5 = knn(train_set.x, test_set.x, train_set.y, k = 5)
+
+# Second confusion matrix
+tab.knn5 = table(test_set.y, knn5, dnn = c("Actual", "Predicted"))
+tab.knn5
+
+#  Error rate with k = 5
+knn5.err = mean(test_set.y != knn5)
+knn5.err
+# Error rate of 33.47%
+
+#  Try k = 13
+knn13 = knn(train_set.x, test_set.x, train_set.y, k = 13)
+
+# Third confusion matrix
+tab.knn13 = table(test_set.y, knn13, dnn = c("Actual", "Predicted"))
+tab.knn13
+
+# Error rate with k = 13
+knn13.err = mean(test_set.y != knn13)
+knn13.err
+# Error rate of 32.55%
+
+
+#  Normalize the data and check results
+#
+train_set.x.n = scale(train_set.x)
+test_set.x.n = scale(test_set.x)
+mean(train_set.x.n[,1])
+sd(train_set.x.n[,1])
+#
+# 
+#  Now set up a loop to run a bunch kNNs
+#    with the normalized data
+#  knn.err keeps track of the errors
+#
+knn.err = 1:50
+xrange = 1:50
+for (j in 1:99) 
+{
+  if (j %% 2 != 0) 
+    {
+    xrange[(j + 1) / 2] = j
+    out = knn(train_set.x.n, test_set.x.n, train_set.y, j)
+    knn.err[(j + 1) / 2] = mean(out != test_set.y)
+  }
+}
+
+xrange
+knn.err
+
+#  Plot the errors versus k
+plot(xrange, knn.err, xlab = "Value of K (K odd)", ylab = "Error from KNN")
+# Seems like the lowest error rate is achieved at k = 37
+
+#  Try k = 37
+knn37 = knn(train_set.x, test_set.x, train_set.y, k = 37)
+
+# Third confusion matrix
+tab.knn37 = table(test_set.y, knn37, dnn = c("Actual", "Predicted"))
+tab.knn37
+
+# Error rate with k = 37
+knn37.err = mean(test_set.y != knn37)
+knn37.err
+# Error rate of 32.02%, lowest so far
+```
+
+
+
+
+```{r bib, include=FALSE}
+# KEEP THIS AT THE END OF THE DOCUMENT TO GENERATE A LOCAL bib FILE FOR PKGS USED
+knitr::write_bib(sub("^package:", "", grep("package", search(), value=TRUE)), file='skeleton.bib')
+```
