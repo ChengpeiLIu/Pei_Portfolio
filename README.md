@@ -16,7 +16,7 @@ Data Scientist Portfolio
 # [Project 3: Airline Satisfaction Review](https://github.com/ChengpeiLIu/Pei_Portfolio/tree/main/Airline%20Passenger%20Satisfaction%20Prediction)
 * Feature Selection
 * Logistic Regression, Gaussian Naive Bayes, Decision Tree, Random Forests
-![](/images/download%20(2).png)
+![](/images/5.jpeg)
 
 # [Project 4: Superbowl 2021 Prediction](https://github.com/ChengpeiLIu/Pei_Portfolio/tree/main/Superbowl%20Prediction%202021)
 * Predicted Tampa Bay Buccaneers win 
