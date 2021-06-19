@@ -1,14 +1,22 @@
 # Pei_Portfolio
 Data Scientist Portfolio
 
-# [Project 1: Youtube Trend Analysis](https://github.com/ChengpeiLIu/Pei_Portfolio/tree/main/Youtube%20Trend%20Analysis)
+# [Project 1: E-Commerce Shipping On-Time Prediction](https://github.com/ChengpeiLIu/Pei_Portfolio/tree/main/E-Commerce%20On-time%20Delivery%20Prediction)
+* Written in R, utilized KNN, Poisson Regression, Decision Tree 
+* Predicted On-time Delivery
+During COVID, business are forced to shut doors, so many customers start to shop online, these exponential increase placed a huge strain on shipping networks and increased competition among e-commerce sellers, whoever can beat the door and provide ensured on-time deliveries can stand out in this competition and hold a space in the market. We want use machine learning techniques to help them study their customers and build an accurate classifier to predict whether goods can arrive on time or not. From doing so, we hope to pinpoint areas where company can improve their services and stand out in the competition.
+
+![](/images/9.jpeg)
+
+
+# [Project 2: Youtube Trend Analysis](https://github.com/ChengpeiLIu/Pei_Portfolio/tree/main/Youtube%20Trend%20Analysis)
 * Categorising YouTube videos based on their comments and statistics.
 * Analysing what factors affect how popular a YouTube video will be.
 * The purpose of YouTube Sentiment Analysis report is to find interesting insights within the two YouTube Trending datasets, US Videos and US Comments, from Kaggle. The types of insights and questions are “which category are the most trendy,” “difference of likes and dislikes ratio among video categories,” “what are the most positive, negative, and neutral tags and comments,” and “predict YouTube video category.” In addition, I hope to find correlations among the trending video attributes and find out the key variables that drive the virality of a video. Natural Language Processing Toolkit, NLTK, and TextBlob were used to tokenize the comments and score the positivity and negativity of the texts. Focusing on business implications, me and my team conducted a series of text mining analysis and provided machine learning algorithms solutions, aiming to help businesses with self-branding and better monitoring of marketing campaigns.
 * In summary, I believe the text mining techniques, Topic modeling Browser as well as prediction models create a powerful toolkit for any modern-day businesses or advertising agencies that is aiming to sculpt branding and increase awareness.
 ![](/images/3.png)
 
-# [Project 2: Disney Park Improvement - Sentiment Analysis](https://github.com/ChengpeiLIu/Pei_Portfolio/tree/main/Disney%20Park%20Improvement)
+# [Project 3: Disney Park Improvement - Sentiment Analysis](https://github.com/ChengpeiLIu/Pei_Portfolio/tree/main/Disney%20Park%20Improvement)
 * Utilized key word matching such as "Happiest Place on Earth" & "Fast Pass" and identify emotions and topics within customer's reviews
 To compare customer sentiment regarding attractions at three Disneyland locations (Anaheim, Paris, and Hong Kong) using sentiment analysis, emotion detection, and n-gram associations. To identify keywords using topic modeling that can help Disney determine visitor pain points and improve park experience. 
 * Recommendations: Many visitor pain points stem from frustration of waiting in line and crowds. A large amount of time is spent standing in line, which irritates people and contributes to a more negative experience. Another common pain point that contributes to the problem with long lines is park capacity — more visitors mean longer wait times for attractions and food. Disney should take steps to alleviate symptoms of a negative park experience. 
@@ -16,12 +24,6 @@ For more detailed recommendations: find my team's medium article here: https://m
 ![](/images/7.png)
 
 
-# [Project 3: E-Commerce Shipping On-Time Prediction](https://github.com/ChengpeiLIu/Pei_Portfolio/tree/main/E-Commerce%20On-time%20Delivery%20Prediction)
-* Written in R, utilized KNN, Poisson Regression, Decision Tree 
-* Predicted On-time Delivery
-During COVID, business are forced to shut doors, so many customers start to shop online, these exponential increase placed a huge strain on shipping networks and increased competition among e-commerce sellers, whoever can beat the door and provide ensured on-time deliveries can stand out in this competition and hold a space in the market. We want use machine learning techniques to help them study their customers and build an accurate classifier to predict whether goods can arrive on time or not. From doing so, we hope to pinpoint areas where company can improve their services and stand out in the competition.
-
-![](/images/9.jpeg)
 
 
 
